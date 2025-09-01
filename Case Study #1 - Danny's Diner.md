@@ -5,6 +5,8 @@
 - [Task](#task)
 - [Tool Used](#tool-used)
 - [Entity Relationship Image](#entity-relationship-image)
+- [Things to Note Moving Forward](#things-to-note-moving-forward)
+- [Questions and Solution](#questions-and-solution)
 
 **N.B:** All information regarding this case study was sourced from: [Here](https://8weeksqlchallenge.com/case-study-1/)
 
