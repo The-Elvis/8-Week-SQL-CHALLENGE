@@ -29,7 +29,7 @@ Danny wants to use the data to answer a few simple questions about his customers
 ***
 
 ## Things to Note Moving Forward
-In order to answer these questions and frankly most questions in this case study, we will be carrying out repeated joins making queries look long and repititive. To make this less repititive, it's advisable to create a temporary table with all the necessary joins, then query off your temp table. follow the steps below to create your temp table.
+In order to answer these questions and frankly most questions in this case study, we will be carrying out repeated joins making queries look long and repititive. To make this less repititive, it's advisable to create a temporary table with all the necessary joins, then query off your temp table. Follow the steps below to create your temp table.
 
 #### Steps:
 - Use the **"JOIN"** funtion to merge the sales, members and menu table using the relationship described in the entity relationship image above.
