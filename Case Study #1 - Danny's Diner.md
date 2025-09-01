@@ -126,6 +126,148 @@ WHERE rnk = 1
 ````
 **ANS:** Ramen for customer A, Ramen for C and the 3 items for customer B
 
+**6. Which item was purchased first by the customer after they became a member?**
+
+````sql
+WITH item_after_join AS (
+SELECT *,
+ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY order_date) AS row_num
+FROM temp_t
+WHERE order_date >= join_date
+)
+SELECT customer_id, product_name
+FROM item_after_join
+WHERE row_num = 1;
+````
+
+**ANS:** 
+- Customer A = Curry
+- Customer B = Sushi
+
+**7. Which item was purchased just before the customer became a member**
+
+````sql
+WITH item_after_join AS (
+SELECT *,
+ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY order_date DESC) AS row_num
+FROM temp_t
+WHERE order_date < join_date
+)
+SELECT customer_id, product_name
+FROM item_after_join
+WHERE row_num = 1;
+````
+**ANS:** They (A and B) Both ordered Sushi before  they became a member
+
+**8. What is the total Items and amount spent for each member before they became a member?**
+
+````sql
+SELECT customer_id, COUNT(product_name) AS total_items_BM, SUM(price) total_spent_BM
+FROM temp_t
+WHERE order_date < join_date
+GROUP BY customer_id;
+````
+**ANS:** A bought 2 items, spent $25 while B bought 3 items, spent $40
+
+**9. If each $1 spent equates 10 points and sushi  has 2x points multiplier, how many points would each customer have?**
+
+````sql
+SELECT customer_id, SUM(final_points) AS points_earned
+FROM (SELECT customer_id, product_id, product_name, price, price * 10 AS base_points,
+	CASE
+		WHEN product_id = 1 THEN price * 10 * 2
+		WHEN product_id != 1 THEN price * 10
+	END AS final_points
+	FROM temp_t 
+		) AS pt_table
+GROUP BY customer_id
+ORDER BY 2 DESC;
+````
+**ANS:**
+- B= 940 points
+- A= 860 Points
+- C= 360 points
+
+**10. In the first week after a customer joins the program, they earn 2x points on all items, not just sushi, how many points do customer A and B have at the end of january?**
+
+````sql
+SELECT customer_id, SUM(final_points) AS points_earned
+FROM (SELECT customer_id, product_id, product_name, price, price * 10 AS base_points,
+CASE
+	WHEN product_id = 1 THEN price * 10 * 2
+	WHEN order_date >= join_date
+	AND order_date < join_date + INTERVAL 7 DAY THEN price * 10 * 2
+	ELSE price * 10
+END AS final_points
+FROM temp_t 
+		) AS pt_table2
+GROUP BY customer_id
+ORDER BY 2 DESC;
+````
+**ANS:**
+- A= 1,370 Points
+- B= 940 points
+- C= 360 points
+
+**11. Bonus question create a table for customer_id, order_date, product_name, Price, and member Y/N**
+
+I already have a temp table but let me create a table from scratch called JAT (Join All Things).
+
+````sql
+CREATE TABLE JAT
+SELECT s.customer_id, order_date, product_name, price, 
+CASE
+	WHEN order_date >= join_date THEN 'Y'
+	ELSE 'N'
+END AS `member`
+FROM sales s
+JOIN menu n
+ON s.product_id = n.product_id
+LEFT JOIN members m
+ON s.customer_id = m.customer_id
+;
+
+
+SELECT *
+FROM JAT3;
+````
+
+**12. Bonus 2: Rank All The Things**
+
+Danny also requires further information about the ranking of customer products, but he purposely does not need the ranking for non-member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty program.
+
+````sql
+WITH customer_data AS (
+SELECT s.customer_id, order_date, product_name, price, 
+CASE
+	WHEN order_date >= join_date THEN 'Y'
+	ELSE 'N'
+END AS member_status
+FROM sales s
+JOIN menu n
+ON s.product_id = n.product_id
+LEFT JOIN members m
+ON s.customer_id = m.customer_id
+)
+SELECT *,
+	CASE 
+		WHEN member_status = 'N' THEN NULL
+		ELSE DENSE_RANK() OVER (PARTITION BY customer_id, member_status ORDER BY order_date)
+	END AS ranking
+FROM customer_data;
+````
+
+- OR since we already have a table called JAT
+
+````sql
+SELECT *,
+	CASE 
+		WHEN `member` = 'N' THEN NULL
+		ELSE DENSE_RANK() OVER (PARTITION BY customer_id, `member` ORDER BY order_date)
+	END AS ranking
+FROM JAT;
+````
+
 
 
 
