@@ -6,6 +6,8 @@
 - [Tool Used](#tool-used)
 - [Entity Relationship Image](#entity-relationship-image)
 
+**N.B:** All information regarding this case study was sourced from: [Here](https://8weeksqlchallenge.com/case-study-1/)
+
 ***
 
 ## Task
@@ -24,7 +26,7 @@ Danny wants to use the data to answer a few simple questions about his customers
 
 ***
 
-## Things to note moving forward
+## Things to Note Moving Forward
 In order to answer these questions and frankly most questions in this case study, we will be carrying out repeated joins making queries look long and repititive. To make this less repititive, it's advisable to create a temporary table with all the necessary joins, then query off your temp table. follow the steps below to create your temp table.
 
 #### Steps:
@@ -66,6 +68,63 @@ FROM temp_t
 GROUP BY customer_id 
 ORDER BY 2 DESC;
 ````
+**ANS:** Customer A spent $76, Customer B spent $74, and Customer C spent $36
+
+**2. How many days has each customer visited the restaurant?**
+
+````sql
+SELECT Customer_id, COUNT(DISTINCT order_date) AS Total_Number_Of_Days_Visited
+FROM temp_t
+GROUP BY customer_id 
+ORDER BY 2 DESC;
+````
+**ANS:** Customer A visited 6 days, B visited for 4 days while customer C only visited 2 days
+
+**3. Study What was the first item from the menu purchased by each customer?**
+
+This is best answered using Window Function(in this case Row_Number) inside of a CTE, then query off the CTE.
+
+````sql
+WITH first_order AS (
+SELECT *,
+ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY order_date) AS row_num
+FROM temp_t
+)
+SELECT customer_id, product_name
+FROM first_order
+WHERE row_num = 1; -- answer
+````
+**ANS:** 
+- A= Sushi 
+- B= Curry
+- C= Ramen
+
+**4. What is the most purchased item on the menu?**
+
+````sql
+SELECT product_name, COUNT(product_name) Number_of_purchases
+FROM temp_t
+GROUP BY product_name
+ORDER BY 2 DESC;
+````
+**ANS:** Ramen
+
+**5. Which item was the most popular for each customer?**
+
+Like question 3, this is best answered using Window Function(in this case Dense_Rank) inside of a CTE, then query off the CTE.
+
+````sql
+WITH popularity AS (
+SELECT customer_id, product_name, COUNT(product_name) AS orders,
+DENSE_RANK() OVER(PARTITION BY customer_id ORDER BY COUNT(product_name) DESC) AS rnk
+FROM temp_t
+GROUP BY customer_id, product_name
+)
+SELECT customer_id, product_name
+FROM popularity
+WHERE rnk = 1
+````
+**ANS:** Ramen for customer A, Ramen for C and the 3 items for customer B
 
 
 
